@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Water Gun | Made by Ashutosh Dubey</title>
+    
+    <style>
+        /* Modern & High-Contrast CSS */
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            text-align: center; 
+            margin: 0;
+            padding: 50px 20px;
+            /* Gradient background */
+            background: linear-gradient(135deg, #1a252f 0%, #2c3e50 100%); 
+            color: #ecf0f1; 
+            min-height: 100vh;
+        }
+
+        h1 { 
+            font-size: 3rem; 
+            margin-bottom: 5px; 
+            color: #f1c40f; /* Gold text for contrast */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #bdc3c7;
+            margin-bottom: 30px;
+        }
+
+        h3.author {
+            color: #ecf0f1;
+            margin-bottom: 40px;
+            font-weight: 400;
+        }
+
+        .game-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        /* Animated & Contrasted Buttons */
+        .btn { 
+            font-size: 24px; 
+            padding: 20px 40px; 
+            cursor: pointer; 
+            border-radius: 50px; 
+            border: 3px solid transparent;
+            transition: all 0.3s ease; /* Smooth transitions */
+            background-color: #ecf0f1; 
+            color: #2c3e50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Hover & Active Effects */
+        .btn:hover { 
+            transform: translateY(-5px) scale(1.05); /* Pop-up effect */
+            background-color: #f1c40f; /* Change to Gold */
+            color: #1a252f;
+            border-color: #f39c12;
+            box-shadow: 0 8px 15px rgba(241, 196, 15, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(1px); /* Push-down on click */
+            box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+
+        /* Animated Result Box */
+        #res-box { 
+            margin-top: 30px; 
+            padding: 30px; 
+            background: rgba(52, 73, 94, 0.8); /* Semi-transparent */
+            display: inline-block; 
+            border-radius: 20px; 
+            min-width: 350px; 
+            border: 2px solid #f1c40f; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        #outcome {
+            font-size: 2rem;
+            margin: 0;
+            margin-bottom: 10px;
+        }
+
+        #details {
+            font-size: 1.2rem;
+            color: #bdc3c7;
+            margin: 0;
+        }
+
+        /* Pulsate Animation for waiting text */
+        .waiting {
+            animation: pulsate 1.5s infinite;
+        }
+
+        @keyframes pulsate {
+            0% { color: #bdc3c7; opacity: 1; }
+            50% { color: #f1c40f; opacity: 0.7; }
+            100% { color: #bdc3c7; opacity: 1; }
+        }
+
+        /* Bouncing animation when button is clicked */
+        .btn-clicked {
+            animation: bounce 0.4s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(0.9); }
+        }
+
+        .footer { 
+            margin-top: 100px; 
+            font-size: 14px; 
+            color: #7f8c8d; 
+        }
+
+        /* Different colored glows on hover */
+        #snake-btn:hover { box-shadow: 0 8px 15px rgba(46, 204, 113, 0.5); border-color: #27ae60; } /* Green for Snake */
+        #water-btn:hover { box-shadow: 0 8px 15px rgba(52, 152, 219, 0.5); border-color: #2980b9; } /* Blue for Water */
+        #gun-btn:hover { box-shadow: 0 8px 15px rgba(231, 76, 60, 0.5); border-color: #c0392b; } /* Red for Gun */
+
+    </style>
+</head>
+<body>
+    <h1>Snake Water Gun</h1>
+    <p class="subtitle">Classic game made by:</p>
+    <h3 class="author">Ashutosh Dubey</h3>
+    
+    <div class="game-buttons">
+        <button id="snake-btn" class="btn" onclick="play('snake', this)">
+            <span>🐍</span> Snake
+        </button>
+        <button id="water-btn" class="btn" onclick="play('water', this)">
+            <span>💧</span> Water
+        </button>
+        <button id="gun-btn" class="btn" onclick="play('gun', this)">
+            <span>🔫</span> Gun
+        </button>
+    </div>
+
+    <div id="res-box">
+        <h2 id="outcome" class="waiting">Waiting for your move...</h2>
+        <p id="details">Let's see who wins!</p>
+    </div>
+
+    <div class="footer">
+        © 2024 Ashutosh Dubey Games
+    </div>
+
+    <script>
+        async function play(userMove, buttonElement) {
+            // Add a temporary "clicked" animation
+            buttonElement.classList.add('btn-clicked');
+            setTimeout(() => { buttonElement.classList.remove('btn-clicked'); }, 400);
+
+            // Fetch the result from Python
+            const response = await fetch('/get_result', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({move: userMove})
+            });
+            const data = await response.json();
+            
+            // Remove pulsate animation when result is shown
+            const outcomeElement = document.getElementById('outcome');
+            outcomeElement.classList.remove('waiting');
+            
+            // Display result
+            outcomeElement.innerText = data.result;
+            document.getElementById('details').innerText = `You: ${userMove} | Computer: ${data.computer}`;
+
+            // Add simple color flash to result box based on win/loss
+            const resBox = document.getElementById('res-box');
+            if (data.result.includes("Win")) {
+                resBox.style.borderColor = '#2ecc71'; // Green for win
+            } else if (data.result.includes("Lose")) {
+                resBox.style.borderColor = '#e74c3c'; // Red for loss
+            } else {
+                resBox.style.borderColor = '#bdc3c7'; // Grey for draw
+            }
+        }
+    </script>
+</body>
+</html>
